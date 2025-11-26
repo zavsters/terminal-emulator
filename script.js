@@ -208,52 +208,69 @@ const commands = {
     
     mkdir: (args) => {
         if (!args || args.length === 0) {
-            return "mkdir: missing operand";
+            return "mkdir: missing operand\nTry 'mkdir --help' for more information.";
         }
         
         const dirName = args[0];
         
         // Validate folder name
-        if (dirName.includes("/") || dirName === "" || dirName === "." || dirName === "..") {
-            return `mkdir: cannot create directory '${dirName}': Invalid name`;
+        if (dirName.includes("/")) {
+            return `mkdir: cannot create directory '${dirName}': No such file or directory`;
+        }
+        if (dirName === "" || dirName === "." || dirName === "..") {
+            return `mkdir: cannot create directory '${dirName}': Invalid argument`;
         }
         
         const currentDir = getCurrentDir();
         if (!currentDir) {
-            return "Error: Cannot access current directory";
+            return "mkdir: cannot create directory: No such file or directory";
         }
         
         if (currentDir[dirName]) {
-            return `mkdir: cannot create directory '${dirName}': File exists`;
+            // Check if it's a file or directory
+            const existing = currentDir[dirName];
+            if (typeof existing === "object" && !existing.content) {
+                return `mkdir: cannot create directory '${dirName}': File exists`;
+            } else {
+                return `mkdir: cannot create directory '${dirName}': Not a directory`;
+            }
         }
         
+        // Create directory
         currentDir[dirName] = {};
-        return "";
+        return ""; // Success - no output in real terminal
     },
     
     touch: (args) => {
         if (!args || args.length === 0) {
-            return "touch: missing file operand";
+            return "touch: missing file operand\nTry 'touch --help' for more information.";
         }
         
         const fileName = args[0];
         
         // Validate file name
-        if (fileName.includes("/") || fileName === "" || fileName === "." || fileName === "..") {
-            return `touch: cannot create file '${fileName}': Invalid name`;
+        if (fileName.includes("/")) {
+            return `touch: cannot touch '${fileName}': No such file or directory`;
+        }
+        if (fileName === "" || fileName === "." || fileName === "..") {
+            return `touch: cannot touch '${fileName}': Invalid argument`;
         }
         
         const currentDir = getCurrentDir();
         if (!currentDir) {
-            return "Error: Cannot access current directory";
+            return "touch: cannot touch file: No such file or directory";
         }
         
-        // Create file with empty content if it doesn't exist
-        if (!currentDir[fileName]) {
-            currentDir[fileName] = { content: "" };
+        // Check if it already exists as a directory
+        if (currentDir[fileName] && typeof currentDir[fileName] === "object" && !currentDir[fileName].content) {
+            // In real terminal, touch on a directory updates its timestamp but doesn't error
+            // For simplicity, we'll just return success (no output)
+            return "";
         }
         
-        return "";
+        // Create or update file (touch updates timestamp if exists, creates if not)
+        currentDir[fileName] = { content: currentDir[fileName]?.content || "" };
+        return ""; // Success - no output in real terminal
     },
     
     cat: (args) => {
@@ -315,10 +332,14 @@ function executeCommand(input) {
                           result.includes(": No such file") || 
                           result.includes(": Not a directory") ||
                           result.includes(": File exists") ||
-                          result.includes(": Invalid name") ||
+                          result.includes(": Invalid") ||
                           result.includes(": Is a directory") ||
                           result.includes("missing operand") ||
-                          result.includes("Command not found");
+                          result.includes("missing file operand") ||
+                          result.includes("cannot create") ||
+                          result.includes("cannot touch") ||
+                          result.includes("Command not found") ||
+                          result.includes("Try '");
             addOutput(result, isError ? "error" : "");
         }
     } else {
