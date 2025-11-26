@@ -208,7 +208,7 @@ const commands = {
     
     mkdir: (args) => {
         if (!args || args.length === 0) {
-            return "mkdir: missing operand\nTry 'mkdir --help' for more information.";
+            return "mkdir: missing operand";
         }
         
         const dirName = args[0];
@@ -243,7 +243,7 @@ const commands = {
     
     touch: (args) => {
         if (!args || args.length === 0) {
-            return "touch: missing file operand\nTry 'touch --help' for more information.";
+            return "touch: missing file operand";
         }
         
         const fileName = args[0];
