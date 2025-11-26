@@ -12,7 +12,11 @@ let currentPath = "/";
 
 // Get current directory object
 function getCurrentDir() {
-    const pathParts = currentPath === "/" ? [""] : currentPath.split("/").filter(p => p);
+    if (currentPath === "/") {
+        return filesystem["/"];
+    }
+    
+    const pathParts = currentPath.split("/").filter(p => p);
     let dir = filesystem["/"];
     
     for (const part of pathParts) {
@@ -170,7 +174,7 @@ const commands = {
         
         const items = Object.keys(dir).sort();
         if (items.length === 0) {
-            return "";
+            return "(empty)";
         }
         return items.join("  ");
     },
