@@ -136,12 +136,13 @@ function getParentDir(path) {
     return getPathObject(parentPath) || filesystem["/"];
 }
 
-// DOM elements
-const output = document.getElementById("output");
-const commandInput = document.getElementById("command-input");
+// DOM elements (will be initialized when DOM is ready)
+let output;
+let commandInput;
 
 // Add output line
 function addOutput(text, className = "") {
+    if (!output) return;
     const line = document.createElement("div");
     line.className = "output-line " + className;
     line.textContent = text;
@@ -151,6 +152,7 @@ function addOutput(text, className = "") {
 
 // Clear output
 function clearOutput() {
+    if (!output) return;
     output.innerHTML = "";
 }
 
@@ -320,25 +322,37 @@ function executeCommand(input) {
     }
 }
 
-// Handle input
-commandInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-        const input = commandInput.value;
-        executeCommand(input);
-        commandInput.value = "";
+// Initialize when DOM is ready
+document.addEventListener("DOMContentLoaded", () => {
+    // Get DOM elements
+    output = document.getElementById("output");
+    commandInput = document.getElementById("command-input");
+    
+    if (!output || !commandInput) {
+        console.error("Terminal elements not found!");
+        return;
     }
+    
+    // Handle input
+    commandInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            const input = commandInput.value;
+            executeCommand(input);
+            commandInput.value = "";
+        }
+    });
+    
+    // Keep input focused
+    commandInput.addEventListener("blur", () => {
+        setTimeout(() => commandInput.focus(), 0);
+    });
+    
+    // Initial welcome message
+    addOutput("Terminal Emulator v1.0", "title");
+    addOutput("Type commands to interact with the filesystem.");
+    addOutput("Available commands: pwd, ls, cd, mkdir, touch, cat, mario");
+    addOutput("");
 });
-
-// Keep input focused
-commandInput.addEventListener("blur", () => {
-    setTimeout(() => commandInput.focus(), 0);
-});
-
-// Initial welcome message
-addOutput("Terminal Emulator v1.0", "title");
-addOutput("Type commands to interact with the filesystem.");
-addOutput("Available commands: pwd, ls, cd, mkdir, touch, cat, mario");
-addOutput("");
 
 // ==================== MARIO GAME ====================
 
@@ -525,8 +539,12 @@ function exitMarioGame() {
     terminal.classList.remove("hidden");
     
     // Refocus terminal input
-    const commandInput = document.getElementById("command-input");
-    commandInput.focus();
+    if (commandInput) {
+        commandInput.focus();
+    } else {
+        const cmdInput = document.getElementById("command-input");
+        if (cmdInput) cmdInput.focus();
+    }
 }
 
 // Generate initial blocks
